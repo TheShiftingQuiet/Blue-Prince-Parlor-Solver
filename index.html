@@ -552,8 +552,8 @@ function loadSerializedStateFromUrl() {
 
         let anyButton = false;
         for (let toggleButton of group.querySelectorAll('.toggle-button')) {
-            toggleButton.classList.toggle('active', btn.dataset.value === countParam);
-            anyButton = anyButton || btn.dataset.value === countParam;
+            toggleButton.classList.toggle('active', toggleButton.dataset.value === countParam);
+            anyButton = anyButton || toggleButton.dataset.value === countParam;
         };
 
         if (!anyButton) {
