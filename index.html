@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script src="jexl.browser.js"></script>
+<title>Parlor Solver</title>
+<style>
+    body {
+        font-family: sans-serif;
+        margin: 0;
+        padding: 20px;
+    }
+    .box {
+        border: 1px solid #aaa;
+        padding: 10px;
+        margin: 10px;
+        display: inline-block;
+        vertical-align: top;
+        width: 30%;
+    }
+    .setup-controls {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        margin: 10px 0;
+    }
+    input {
+        width: 100%;
+        margin: 2px 0;
+    }
+    button {
+        margin-right: 5px;
+    }
+    .effects-container {
+        display: flex;
+        flex-direction: row;
+        margin-top: 10px;
+    }
+    .effects {
+        margin-top: 10px;
+        margin-right: 50px;
+    }
+    .toggle-group {
+        display: flex;
+    }
+
+    .toggle-row {
+        display: contents;
+    }
+
+    .toggle-label {
+        font-weight: bold;
+        align-self: center;
+    }
+
+    .button-group {
+        margin-left: 10px;
+        margin-right: 40px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    button {
+        padding: 6px 14px;
+        margin-right: 6px;
+        border: 1px solid #888;
+        background-color: #f0f0f0;
+        cursor: pointer;
+        border-radius: 4px;
+        font-size: 14px;
+        user-select: none;
+        transition: background-color 0.2s, color 0.2s;
+    }
+
+    button:hover {
+        background-color: #e0e0e0;
+    }
+
+    .toggle-button {
+        margin-right: 6px;
+    }
+
+    .toggle-button.active {
+        background-color: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+
+    .statement-block {
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 10px;
+        margin-top: 12px;
+        background-color: #fafafa;
+        color: black;
+    }
+
+    .statement-block h4 {
+        margin-top: 0;
+        margin-bottom: 10px;
+        font-size: 16px;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 4px;
+    }
+
+    .statement-grid {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 6px 12px;
+        align-items: center;
+    }
+
+    .statement-grid label {
+        font-weight: 500;
+    }
+
+    .statement-grid input {
+        width: 100%;
+        font-family: monospace;
+        font-size: 14px;
+        padding: 4px;
+        box-sizing: border-box;
+    }
+
+    .statement-compact-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 6px;
+        font-size: 14px;
+    }
+
+    .statement-compact-table th,
+    .statement-compact-table td {
+        padding: 4px 6px;
+        border: 1px solid #ddd;
+        vertical-align: middle;
+    }
+
+    .statement-compact-table input {
+        width: 100%;
+        font-family: monospace;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+
+    .controls {
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .box:nth-child(1) {
+        background-color: #9dc9ff;
+    }
+    .box:nth-child(2) {
+        background-color: #ffffff;
+    }
+    .box:nth-child(3) {
+        background-color: #2e2e2e;
+        color: white;
+    }
+
+    .case {
+        margin: 10px 0;
+        border: 2px solid #333;
+        padding: 10px;
+        background-color: #ccffcc
+    }
+
+    #outcomeSummary {
+        margin: 10px 0;
+        border: 2px solid #333;
+        padding: 10px;
+    }
+
+    #outcomeSummary.found-answer {
+        background-color: #ccffcc;
+    }
+
+    #outcomeSummary.no-answer {
+        background-color: #ffcccc;
+    }
+
+    #outcomeSummary.ambiguous-answer {
+        background-color: #d5b1de;
+    }
+
+    #outcomeText {
+        white-space-collapse: preserve;
+    }
+
+    .case.invalid-case {
+        background-color: #ffcccc;
+    }
+
+    .case.ambiguous-case {
+        background-color: #d5b1de;
+    }
+    
+    .highlight-false {
+        background-color: yellow;
+    }
+
+    .case .effect-false {
+        color: red;
+    }
+
+    .case .effect-true {
+        color: green;
+    }
+
+    .reasoning li {
+        white-space-collapse: preserve;
+        margin-bottom: 10px;
+    }
+
+    #helpModal {
+        display: none; 
+        position: fixed; 
+        top: 0; 
+        left: 0; 
+        width: 100%; 
+        height: 100%; 
+        background: rgba(0,0,0,0.6); 
+        z-index: 1000;
+    }
+
+    #helpModalInner {
+        background: white; 
+        padding: 20px; 
+        margin: 15px; 
+        top: 50%;
+        transform: translateY(-50%);
+        border-radius: 8px; 
+        position: relative;
+    }
+
+    #helpModalHeader {
+        display: flex;
+        justify-content: space-between;
+    }
+</style>
+</head>
+
+<body>
+    <div class="setup-controls">
+        <div class="toggle-group">
+            <div class="toggle-row">
+                <label class="toggle-label">Blue:</label>
+                <div class="button-group" data-name="blueCount">
+                    <button class="toggle-button" data-value="0">Blank box</button>
+                    <button class="toggle-button" data-value="1">1 statement</button>
+                    <button class="toggle-button active" data-value="2">2 statements</button>
+                    <button class="toggle-button" data-value="3">3 statements</button>
+                </div>
+            </div>
+            <div class="toggle-row">
+                <label class="toggle-label">White:</label>
+                <div class="button-group" data-name="whiteCount">
+                    <button class="toggle-button" data-value="0">Blank box</button>
+                    <button class="toggle-button" data-value="1">1 statement</button>
+                    <button class="toggle-button active" data-value="2">2 statements</button>
+                    <button class="toggle-button" data-value="3">3 statements</button>
+                </div>
+            </div>
+            <div class="toggle-row">
+                <label class="toggle-label">Black:</label>
+                <div class="button-group" data-name="blackCount">
+                    <button class="toggle-button" data-value="0">Blank box</button>
+                    <button class="toggle-button" data-value="1">1 statement</button>
+                    <button class="toggle-button active" data-value="2">2 statements</button>
+                    <button class="toggle-button" data-value="3">3 statements</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="inputArea"></div>
+    <div class="controls">
+        <button onclick="calculate()">Calculate</button>
+        <button onclick="clearCalculations()">Clear calculations</button>
+        <button onclick="clearAll()">Clear all</button>
+        <button onclick="openHelpModal()">Help</button>
+    </div>
+    <div id="outcomeSummary" style="display: none;">
+        <h3>Outcome</h3>
+        <p id="outcomeText"></p>
+    </div>
+    <div id="cases"></div>
+
+    <div id="helpModal">
+        <div id="helpModalInner">
+            <div id="helpModalHeader">
+                <h2>Instructions</h2>
+                <button onclick="closeHelpModal()" style="margin-top: 20px;">Close</button>        
+            </div>
+            
+            <p>You know the rules for the parlor already from Blue Prince.</p>
+            <p>You need to choose the number of statements you have for each of the three boxes, as well as filling out the statements:</p>
+            <ul>
+                <li><strong>Label</strong>: the label. For the True case - this can be the statement on the box, verbatim. For the False case - this would be the negation: "(the statement) is not true". In most cases, you can word the negation more clearly.</li>
+                <li><strong>Condition (JS)</strong>: A javascript expression that evaluates to a truthy value if the statement is logically consistent with the assumption, or a falsy value if it contradicts it. Typically, the False version for this is just the same as the True variant but negated, but sometimes you might want to write 'false' if the statement contradicts itself (like "every statement with the word empty is false" - that statement cannot be true by definition).</li>
+            </ul>
+
+            <p>The script go through each possible combination of which statements are true/false, e.g. blue statement 1 is True, blue statement 2 is True, white statement 1 is False, white statement 2 is True, black has one statement and it's False.</p>
+            <p>For each combination (case), it will consider 3 possibilities: gems are in the blue box, gems are in the white box, and gems are in the black box.</p>
+            <p>For each of those possibilities, it will evaluate the JS conditions for the assumption and if any of the possibilities has all of the JS conditions returning true - that's a valid case. Else, it shows the contradiction.</p>            
+            <p>Your JS condition will have access to the following objects (and each will have a different value when considering each possibility) - <code>blue</code>, <code>white</code>, <code>black</code>, each object with:</li>
+            </ul>
+            <pre><code>{
+    oneIsTrue: boolean,
+    twoIsTrue: boolean,
+    isAllTrue: boolean,
+    isAllFalse: boolean,
+    isEmpty: boolean,
+    hasGems: boolean
+}</code></pre>
+            <h3>Example:</h3>
+            <p>If you're doing the TRUE js condition for the statement "the white box is empty", then use the following JS condition:</p>
+            <code>white.isEmpty</code><br>
+            <p>If you're doing the FALSE js condition for the statement "every statement with the word "empty" is false", the negation of which would be "at least one statement with the word "empty" is true", and assuming the statements that contain the word "empty' are blue 1, white 1, white 2 and black 1, then use the following JS condition:</p>
+            <code>blue.oneIsTrue || white.oneIsTrue || white.twoIsTrue || black.oneIsTrue
+        </div>
+    </div>
+
+</body>
+
+<script>
+const maxPossibleStatements = 3;
+const boxNames = ['Blue', 'White', 'Black'];
+// just a sanity check - we make sure none of the box names include any HTML characters, since we treat this as safe
+const unsafeChars = ['<', '>', '&', '"', "'", '`'];
+boxNames.forEach(boxName => {
+    if (unsafeChars.some(char => boxName.includes(char))) {
+        let err = `Box name "${boxName}" contains unsafe characters.`;
+        console.error(err);
+        alert(err);
+        throw new Error(err);
+    }
+});
+
+function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, match => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+    }[match]));
+}
+
+const state = {
+    inputs: {},
+    cases: [],
+};
+
+function getStatementsCount(boxName) {
+    return parseInt(document.querySelector(`.button-group[data-name="${boxName.toLowerCase()}Count"] .toggle-button.active`).dataset.value);
+}
+
+
+function generateInputs() {
+    const inputArea = document.getElementById('inputArea');
+
+    boxNames.forEach(boxName => {
+        const count = getStatementsCount(boxName);
+
+        let boxDiv = document.querySelector(`#box_${boxName}`);
+        if (!boxDiv) {
+            boxDiv = document.createElement('div');
+            boxDiv.classList.add('box');
+            boxDiv.id = `box_${boxName}`;
+            boxDiv.innerHTML = `<h3>${boxName}</h3>`;
+            for (let i = 0; i < maxPossibleStatements; i++) {
+                const statementBlock = document.createElement('div');
+                statementBlock.classList.add('statement-block');
+                statementBlock.id = `${boxName}_statement_${i + 1}`;
+                statementBlock.innerHTML = `
+                    <h4>Statement ${i + 1}</h4>
+                    <table class="statement-compact-table">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>Label</th>
+                                <th>Condition (JS)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>If TRUE</strong></td>
+                                <td><input type="text" id="${boxName}_s${i + 1}_true_label" /></td>
+                                <td><input type="text" id="${boxName}_s${i + 1}_true_code" /></td>
+                            </tr>
+                            <tr>
+                                <td><strong>If FALSE</strong></td>
+                                <td><input type="text" id="${boxName}_s${i + 1}_false_label" /></td>
+                                <td><input type="text" id="${boxName}_s${i + 1}_false_code" /></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                `;
+                boxDiv.appendChild(statementBlock);
+            }
+            inputArea.appendChild(boxDiv);
+        }
+
+        for (let i = 0; i < maxPossibleStatements; i++) {
+            const block = document.getElementById(`${boxName}_statement_${i + 1}`);
+            block.style.display = (i < count) ? '' : 'none';
+        }
+    });
+}
+
+function generateCases() {
+    document.getElementById('cases').innerHTML = '';
+    state.cases = [];
+
+    const statementCounts = boxNames.map(boxName => getStatementsCount(boxName));
+    const totalCases = [];
+
+    function generateCombos(depth = 0, current = []) {
+        if (depth === boxNames.length) {
+            // blank boxes are never all-true or all-false, they're always the "other" option
+            const nonBlankBoxes = current.filter(arr => arr.length > 0);
+
+            if (nonBlankBoxes.length === 0) {
+                return;
+            }
+
+            // must have one all TRUE and one all FALSE
+            const allTrue = nonBlankBoxes.some(arr => arr.every(x => x));
+            const allFalse = nonBlankBoxes.some(arr => arr.every(x => !x));
+            if (allTrue && allFalse) {
+                totalCases.push(current);
+            }
+            return;
+        }
+        const size = statementCounts[depth];
+        const max = 1 << size;
+        for (let i = 0; i < max; i++) {
+            const combo = [];
+            for (let j = 0; j < size; j++) {
+                combo.push(Boolean(i & (1 << j)));
+            }
+            generateCombos(depth + 1, current.concat([combo]));
+        }
+    }
+
+    generateCombos();
+    totalCases.forEach((combo, caseIndex) => {
+        const caseDiv = document.createElement('div');
+        caseDiv.className = 'case';
+        caseDiv.dataset.caseNumber = caseIndex + 1;
+        let effects = '<div class="effects-container">';
+        boxNames.forEach((boxName, boxIndex) => {
+            const count = combo[boxIndex].length;
+            const part = `<b><u>${boxName} (${combo[boxIndex].map(v => v ? '<span class="effect-span effect-true">TRUE</span>' : '<span class="effect-span effect-false">FALSE</span>').join(' / ')}):</u></b><br>` +
+                combo[boxIndex].map((assumedTrue, statementIndex) => {
+                    const labelId = `${boxName}_s${statementIndex + 1}_${assumedTrue ? 'true' : 'false'}_label`;
+                    const label = document.getElementById(labelId)?.value || '';
+                    return `<span class="stmt" data-box-name="${boxName}" data-statement-index="${statementIndex}" data-assumed-true="${assumedTrue}">${statementIndex + 1}. ${escapeHtml(label)}</span>`;
+                }).join('<br>');
+            effects += `<div class="effects">${part}</div>`;
+        });
+        effects += '</div>';
+        let reasoning = '<div class="reasoning"></div>';
+
+        caseDiv.innerHTML = `<h3>CASE ${caseIndex + 1}</h3>${effects}${reasoning}`;
+        document.getElementById('cases').appendChild(caseDiv);
+        state.cases.push({
+            combo,
+            element: caseDiv
+        });
+    });
+}
+
+function clearCalculations() {
+    state.cases.forEach(({
+        element
+    }) => {
+        element.classList.remove('invalid-case');
+        element.classList.remove('ambiguous-case');
+        element.querySelectorAll('.stmt').forEach(span => span.classList.remove('highlight-false'));
+    });
+}
+
+function clearAll() {
+    state.cases = [];
+    document.getElementById('cases').innerHTML = '';
+    boxNames.forEach(boxName => {
+        // we clear ALL, the maximum
+        for (let i = 0; i < maxPossibleStatements; i++) {
+            for (let stateKey of ['true', 'false']) {
+                const labelId = `${boxName}_s${i + 1}_${stateKey}_label`;
+                const codeId = `${boxName}_s${i + 1}_${stateKey}_code`;
+                const labelEl = document.getElementById(labelId);
+                const codeEl = document.getElementById(codeId);
+                if (labelEl) labelEl.value = '';
+                if (codeEl) codeEl.value = '';
+            }
+        }
+    });
+
+    document.getElementById('outcomeSummary').style.display = 'none';
+    document.getElementById('outcomeText').textContent = '';
+}
+
+function serializeStateToUrl() {
+    const params = new URLSearchParams();
+
+    boxNames.forEach(box => {
+        params.set(box.toLowerCase() + 'Count', getStatementsCount(box));
+    });
+
+    boxNames.forEach(box => {
+        const count = getStatementsCount(box);
+        for (let i = 0; i < count; i++) {
+            ['true', 'false'].forEach(state => {
+                const labelId = `${box}_s${i + 1}_${state}_label`;
+                const codeId = `${box}_s${i + 1}_${state}_code`;
+                const labelEl = document.getElementById(labelId);
+                const codeEl = document.getElementById(codeId);
+                if (labelEl) params.set(labelId, labelEl.value);
+                if (codeEl) params.set(codeId, codeEl.value);
+            });
+        }
+    });
+
+    const url = new URL(window.location);
+    url.search = params.toString();
+    history.replaceState({}, '', url);
+}
+
+
+function loadSerializedStateFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+
+    boxNames.forEach(box => {
+        const countParam = params.get(box.toLowerCase() + 'Count');
+        if (countParam) {
+            const group = document.querySelector(`.button-group[data-name="${box.toLowerCase()}Count"]`);
+            if (group) {
+                group.querySelectorAll('.toggle-button').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.value === countParam);
+                });
+            }
+        }
+    });
+
+    generateInputs();
+
+    setTimeout(() => {
+        for (const [key, value] of params.entries()) {
+            const el = document.getElementById(key);
+            if (el) {
+                el.value = value;
+            }
+        }
+    }, 0);
+}
+
+
+function calculate() {
+    clearCalculations();
+    generateCases();
+    
+    console.log("Calculating contradictions across all cases...");
+
+    let allValidBoxIndexes = new Set();
+
+    let nextCaseIndex = 0;
+    for (let {combo, element} of state.cases) {
+        let caseIndex = nextCaseIndex++;
+        console.log(`\n\n\nEvaluating Case ${caseIndex + 1}\nBlue: ${combo[0].map(x => x ? 'TRUE' : 'FALSE').join(' / ')}\nWhite: ${combo[1].map(x => x ? 'TRUE' : 'FALSE').join(' / ')}\nBlack: ${combo[2].map(x => x ? 'TRUE' : 'FALSE').join(' / ')}`);
+
+        let contradictionStrings = [];
+        let failedStatementsSet = new Set();
+        let foundValidSubcaseInds = [];
+        // we go through all sub-cases
+        for (let gemsInBoxInd = 0; gemsInBoxInd < boxNames.length; gemsInBoxInd++) {
+            console.log(`\nCase ${caseIndex + 1}, subcase ${gemsInBoxInd + 1}`);
+
+            const boxPropsObjects = [];
+            for (let i = 0; i < boxNames.length; i++) {
+                const boxName = boxNames[i];
+                // blue = {
+                //   "oneIsTrue": true if blue 1 statement is assumed true in this case, false otherwise,
+                //   "twoIsTrue": true if blue 2 statement is assumed true in this case, false otherwise
+                //   "isAllTrue": true if blue 1 AND blue 2 (or if it's just one statement - blue 1) are both / is assumed true in this case, false otherwise
+                //   "isAllFalse": true if blue 1 AND blue 2 (or if it's just one statement - blue 1) are both / is assumed false in this case, false otherwise
+                //   "isEmpty": true if this sub-case assumes it's empty
+                //   "hasGems": true if this sub-case assumes it has gems
+                // }
+                let boxCombo = combo[i];
+                const boxProps = {
+                    oneIsTrue: boxCombo.length > 0 ? boxCombo[0] === true : false,
+                    twoIsTrue: boxCombo.length > 1 ? boxCombo[1] === true : false,
+                    isAllTrue: boxCombo.length === 0 ? false : boxCombo.every(v => v === true),
+                    isAllFalse: boxCombo.length === 0 ? false : boxCombo.every(v => v === false),
+                    isEmpty: gemsInBoxInd !== i,
+                    hasGems: gemsInBoxInd === i
+                }
+                boxPropsObjects.push(boxProps);
+            }
+
+            console.log(`Assuming ${boxNames[gemsInBoxInd]} has gems:`, boxPropsObjects);
+
+            // now we need to evaluate each of the statements of each box
+            let foundContradiction = false;
+            for (let boxIndex = 0; boxIndex < boxNames.length; boxIndex++) {
+                const boxName = boxNames[boxIndex];
+                const statementTruthsArray = combo[boxIndex];
+                for (let statementIndex = 0; statementIndex < statementTruthsArray.length; statementIndex++) {
+                    const boxIsTrue = statementTruthsArray[statementIndex];
+                    const codeIdPrefix = `${boxName}_s${statementIndex + 1}_${boxIsTrue ? 'true' : 'false'}`;
+                    const codeInputId = `${codeIdPrefix}_code`;
+                    const labelInputId = `${codeIdPrefix}_label`;
+                    const code = document.getElementById(codeInputId)?.value;
+                    const label = document.getElementById(labelInputId)?.value;
+                    if (!code || code.trim() === '') {
+                        // it's empty, we assume no contradiction
+                        continue;
+                    }
+
+                    try {
+                        const result = Jexl.evalSync(code, {
+                            blue: boxPropsObjects[0],
+                            white: boxPropsObjects[1],
+                            black: boxPropsObjects[2]
+                        });
+
+                        console.log(`${boxName} ${statementIndex + 1} [${boxIsTrue ? 'TRUE' : 'FALSE'}]: ${code} => ${!!result}`);
+
+                        if (!result) {
+                            foundContradiction = true;
+                            failedStatementsSet.add(`${boxName}:${statementIndex}`);
+                            contradictionStrings.push(`If gems in ${boxName.toLowerCase()}:\n"${label}"\nthat assumption derived from ${boxName.toLowerCase()} box ${statementIndex + 1} is a CONTRADICTION`);
+                            break;
+                        }
+                    } catch (err) {
+                        alert(`Error evaluating the JS for ${boxName} statement ${statementIndex + 1}: ${err.message}`);
+                        return;
+                    }
+                }
+
+                if (foundContradiction) {
+                    break;
+                }
+            }
+
+            if (!foundContradiction) {
+                foundValidSubcaseInds.push(gemsInBoxInd);
+                console.log(`No contradictions in this sub-case, case ${caseIndex + 1} is valid if we assume ${boxNames[gemsInBoxInd]} has gems!`);
+            } else {
+                console.log(`That's a contradiction. This sub-case is no good.`);
+            }
+        }
+
+        let reasoningDiv = element.querySelector('.reasoning');
+        let reasoningHeading = document.createElement('h4');
+        reasoningDiv.appendChild(reasoningHeading);
+
+        if (foundValidSubcaseInds.length === 0) {
+            reasoningHeading.textContent = `Invalid case. Reasoning:`;
+
+            console.log(`Case ${caseIndex + 1} is INVALID. All sub-cases (possible gem placements) lead to contradictions.`);
+            element.classList.add('invalid-case');
+            element.querySelectorAll('.stmt').forEach(span => {
+                const boxName = span.dataset.boxName;
+                const statementIndex = span.dataset.statementIndex;
+                
+                if (failedStatementsSet.has(`${boxName}:${statementIndex}`)) {
+                    span.classList.add('highlight-false');
+                } else {
+                    span.classList.remove('highlight-false');
+                }
+            });
+                
+            const ol = document.createElement('ol');
+            for (let i = 0; i < contradictionStrings.length; i++) {
+                const contradictionString = contradictionStrings[i];
+                const li = document.createElement('li');
+                li.textContent = contradictionString;
+                ol.appendChild(li);
+            }
+            reasoningDiv.appendChild(ol);
+        } else {
+            for (let index of foundValidSubcaseInds) {
+                allValidBoxIndexes.add(index);
+            }
+
+            let validSubcaseString;
+            if (foundValidSubcaseInds.length === 1) {
+                reasoningHeading.textContent = `Valid case.`;
+                validSubcaseString = `Case ${caseIndex + 1} is VALID if we assume the gems are in the ${boxNames[foundValidSubcaseInds[0]].toUpperCase()} box.`;
+            } else {
+                element.classList.add('ambiguous-case');
+                reasoningHeading.textContent = `Ambiguous case.`;
+                validSubcaseString = `Case ${caseIndex + 1} is ambiguous: it's valid if the gems are in either of the following boxes: ${foundValidSubcaseInds.map(ind => boxNames[ind].toUpperCase()).join(', ')}.`;
+            }
+
+            console.log(validSubcaseString);
+            const span = document.createElement('span');
+            span.textContent = validSubcaseString;
+            reasoningDiv.appendChild(span);
+        }
+    }
+
+    if (allValidBoxIndexes.size === 0) {
+        document.getElementById('outcomeSummary').classList.remove('found-answer');
+        document.getElementById('outcomeSummary').classList.remove('ambiguous-answer');
+        document.getElementById('outcomeSummary').classList.add('no-answer');
+        document.getElementById('outcomeText').textContent = 'No valid cases found. This should be impossible, please double-check your statements to ensure the logic checks are correct.';
+    } else if (allValidBoxIndexes.size === 1) {
+        document.getElementById('outcomeSummary').classList.remove('no-answer');
+        document.getElementById('outcomeSummary').classList.remove('ambiguous-answer');
+        document.getElementById('outcomeSummary').classList.add('found-answer');
+        document.getElementById('outcomeText').textContent = `Based on the statements, the only possibility is that the gems are in the ${boxNames[Array.from(allValidBoxIndexes)[0]].toUpperCase()} box!`;
+    } else {
+        document.getElementById('outcomeSummary').classList.remove('no-answer');
+        document.getElementById('outcomeSummary').classList.remove('found-answer');
+        document.getElementById('outcomeSummary').classList.add('ambiguous-answer');
+        document.getElementById('outcomeText').textContent = `The result is ambiguous, please either double-check that you have translated each of the logical statements to valid JS code, or alternatively check the cases manually to weed out some contradictions manually.\n\nBased on the statements, the gems could be in any of the following boxes: ${Array.from(allValidBoxIndexes).map(ind => boxNames[ind].toUpperCase()).join(', ')}.`;
+    }
+
+    document.getElementById('outcomeSummary').style.display = 'block';
+
+    serializeStateToUrl();
+}
+
+function openHelpModal() {
+    document.getElementById('helpModal').style.display = 'block';
+}
+
+function closeHelpModal() {
+    document.getElementById('helpModal').style.display = 'none';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.button-group').forEach(group => {
+        group.addEventListener('click', (e) => {
+            if (e.target.classList.contains('toggle-button')) {
+                group.querySelectorAll('.toggle-button').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+            }
+
+            // we also regenerate the inputs when the toggle buttons are clicked
+            generateInputs();
+        });
+    });
+
+    generateInputs();
+    loadSerializedStateFromUrl();
+});
+</script>
+</html>
