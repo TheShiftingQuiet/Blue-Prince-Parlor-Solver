@@ -2,7 +2,6 @@
 <html lang="en">
 
 <head>
-<link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <script src="jexl.browser.js"></script>
@@ -311,12 +310,15 @@
             <p>Your JS condition will have access to the following objects (and each will have a different value when considering each possibility) - <code>blue</code>, <code>white</code>, <code>black</code>, each object with:</li>
             </ul>
             <pre><code>{
-    oneIsTrue: boolean,
-    twoIsTrue: boolean,
-    isAllTrue: boolean,
-    isAllFalse: boolean,
-    isEmpty: boolean,
-    hasGems: boolean
+    "oneIsTrue": true if blue 1 statement is assumed true in this case, false otherwise,
+    "twoIsTrue": true if blue 2 statement is assumed true in this case, false otherwise,
+    "threeIsTrue": true if blue 3 statement is assumed true in this case, false otherwise,
+    "statements": array of strings, each representing the label of the statement in this box (stmt[0] = blue 1 statement, stmt[1] = blue 2 statement, etc.)
+    "statementBools": array of booleans, each representing the truthiness of the statement in this box (stmt[0] = blue 1 statement, stmt[1] = blue 2 statement, etc.)
+    "isAllTrue": true if all of the statements in this box are assumed true in this case, false otherwise
+    "isAllFalse": true if all of the statements in this box are assumed false in this case, false otherwise
+    "isEmpty": true if this sub-case assumes it's empty
+    "hasGems": true if this sub-case assumes it has gems
 }</code></pre>
             <h3>Example:</h3>
             <p>If you're doing the TRUE js condition for the statement "the white box is empty", then use the following JS condition:</p>
@@ -621,9 +623,12 @@ function calculate() {
                 const boxName = boxNames[i];
                 // blue = {
                 //   "oneIsTrue": true if blue 1 statement is assumed true in this case, false otherwise,
-                //   "twoIsTrue": true if blue 2 statement is assumed true in this case, false otherwise
-                //   "isAllTrue": true if blue 1 AND blue 2 (or if it's just one statement - blue 1) are both / is assumed true in this case, false otherwise
-                //   "isAllFalse": true if blue 1 AND blue 2 (or if it's just one statement - blue 1) are both / is assumed false in this case, false otherwise
+                //   "twoIsTrue": true if blue 2 statement is assumed true in this case, false otherwise,
+                //   "threeIsTrue": true if blue 3 statement is assumed true in this case, false otherwise,
+                //   "statements": array of strings, each representing the label of the statement in this box (stmt[0] = blue 1 statement, stmt[1] = blue 2 statement, etc.)
+                //   "statementBools": array of booleans, each representing the truthiness of the statement in this box (stmt[0] = blue 1 statement, stmt[1] = blue 2 statement, etc.)
+                //   "isAllTrue": true if all of the statements in this box are assumed true in this case, false otherwise
+                //   "isAllFalse": true if all of the statements in this box are assumed false in this case, false otherwise
                 //   "isEmpty": true if this sub-case assumes it's empty
                 //   "hasGems": true if this sub-case assumes it has gems
                 // }
@@ -631,6 +636,17 @@ function calculate() {
                 const boxProps = {
                     oneIsTrue: boxCombo.length > 0 ? boxCombo[0] === true : false,
                     twoIsTrue: boxCombo.length > 1 ? boxCombo[1] === true : false,
+                    threeIsTrue: boxCombo.length > 2 ? boxCombo[2] === true : false,
+                    statements: boxCombo.map((v, j) => {
+                        const labelId = `${boxName}_s${j + 1}_${v ? 'true' : 'false'}_label`;
+                        const label = document.getElementById(labelId)?.value || '';
+                        return label;
+                    }),
+                    statementBools: boxCombo.map((v, j) => {
+                        const codeId = `${boxName}_s${j + 1}_${v ? 'true' : 'false'}_code`;
+                        const code = document.getElementById(codeId)?.value || '';
+                        return code;
+                    }),
                     isAllTrue: boxCombo.length === 0 ? false : boxCombo.every(v => v === true),
                     isAllFalse: boxCombo.length === 0 ? false : boxCombo.every(v => v === false),
                     isEmpty: gemsInBoxInd !== i,
