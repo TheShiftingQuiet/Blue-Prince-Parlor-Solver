@@ -510,23 +510,25 @@ function clearAll() {
 function serializeStateToUrl() {
     const params = new URLSearchParams();
 
-    boxNames.forEach(box => {
-        params.set(box.toLowerCase() + 'Count', getStatementsCount(box));
-    });
-
-    boxNames.forEach(box => {
-        const count = getStatementsCount(box);
+    for (let boxName of boxNames) {
+        params.set(boxName.toLowerCase() + 'Count', getStatementsCount(boxName));
+    
+        const count = getStatementsCount(boxName);
         for (let i = 0; i < count; i++) {
-            ['true', 'false'].forEach(state => {
-                const labelId = `${box}_s${i + 1}_${state}_label`;
-                const codeId = `${box}_s${i + 1}_${state}_code`;
+            for (let state of ['true', 'false']) {
+                const labelId = `${boxName}_s${i + 1}_${state}_label`;
+                const codeId = `${boxName}_s${i + 1}_${state}_code`;
                 const labelEl = document.getElementById(labelId);
                 const codeEl = document.getElementById(codeId);
-                if (labelEl) params.set(labelId, labelEl.value);
-                if (codeEl) params.set(codeId, codeEl.value);
-            });
+                if (labelEl) {
+                    params.set(labelId, labelEl.value);
+                }
+                if (codeEl) {
+                    params.set(codeId, codeEl.value);
+                }
+            }
         }
-    });
+    }
 
     const url = new URL(window.location);
     url.search = params.toString();
@@ -537,19 +539,50 @@ function serializeStateToUrl() {
 function loadSerializedStateFromUrl() {
     const params = new URLSearchParams(window.location.search);
 
-    boxNames.forEach(box => {
-        const countParam = params.get(box.toLowerCase() + 'Count');
-        if (countParam) {
-            const group = document.querySelector(`.button-group[data-name="${box.toLowerCase()}Count"]`);
-            if (group) {
-                group.querySelectorAll('.toggle-button').forEach(btn => {
-                    btn.classList.toggle('active', btn.dataset.value === countParam);
-                });
-            }
+    for (let boxName of boxNames) {
+        const countParam = params.get(boxName.toLowerCase() + 'Count');
+        if (!countParam) {
+            continue;
         }
-    });
+            
+        const group = document.querySelector(`.button-group[data-name="${boxName.toLowerCase()}Count"]`);
+        if (!group) {
+            continue;
+        }
+
+        let anyButton = false;
+        for (let toggleButton of group.querySelectorAll('.toggle-button')) {
+            toggleButton.classList.toggle('active', btn.dataset.value === countParam);
+            anyButton = anyButton || btn.dataset.value === countParam;
+        };
+
+        if (!anyButton) {
+            // invalid url param, we set it to the default
+            group.querySelector('.toggle-button[data-value="2"]')?.classList.add('active');
+        }
+    }
 
     generateInputs();
+
+    for (let boxName of boxNames) {
+        params.set(boxName.toLowerCase() + 'Count', getStatementsCount(boxName));
+    
+        const count = getStatementsCount(boxName);
+        for (let i = 0; i < count; i++) {
+            for (let state of ['true', 'false']) {
+                const labelId = `${boxName}_s${i + 1}_${state}_label`;
+                const codeId = `${boxName}_s${i + 1}_${state}_code`;
+                const labelEl = document.getElementById(labelId);
+                const codeEl = document.getElementById(codeId);
+                if (labelEl) {
+                    labelEl.value = params.get(labelId) || '';
+                }
+                if (codeEl) {
+                    codeEl.value = params.get(codeId) || '';
+                }
+            }
+        }
+    }
 
     setTimeout(() => {
         for (const [key, value] of params.entries()) {
