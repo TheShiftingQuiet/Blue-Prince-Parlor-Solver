@@ -1,3 +1,5 @@
+# Blue Prince Parlor Puzzle Solver
+
 Hello! 
   
 I'm an avid parlor room enjoyer. I got a parlor room almost every single run for my first 50 days straight. Eventually, I had come up with a little system and a template in my notes to go through all 6 possible cases for the 1 statement puzzles.  
