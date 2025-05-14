@@ -1,4 +1,4 @@
-# Blue Prince Parlor Puzzle Solver
+# Blue Prince - Parlor Puzzle Solver
 
 Hello! 
   
