@@ -477,6 +477,7 @@
         <button onclick="clearCalculations()">Clear calculations</button>
         <button onclick="clearAll()">Clear all</button>
         <button onclick="openHelpModal()">Help</button>
+        <button onclick="openGpt()">Generate JEXL with GPT</button>
     </div>
     <div id="outcomeSummary" style="display: none;">
         <h3>Outcome</h3>
@@ -493,10 +494,11 @@
             <p>So, for the If TRUE condition - you write the logic that would follow if the statement is assumed to be true.</p>
             <p>For the If FALSE condition - you write the logic that would follow if the statement is assumed to be false.</p>
             <p>You might ask, aren't the FALSE conditions just the negation of the TRUE conditions? Yes. But sometimes, the negation is a logical paradox - you can write <code>false</code> for those cases, for example.</p>
-            <p>That said, in most cases, the negation is just the same as the TRUE condition but negated, so it will be generated automatically for you as you write the If TRUE condition- but you can override it.</p>
+            <p>That said, in most cases, the negation is just the same as the TRUE condition but negated, so it will be generated automatically for you as you write the If TRUE condition - but you can override it.</p>
         </details>
         <details>
             <summary>How do I write the JEXL logical expressions?</summary>
+            <p>If you'd like to generate the JEXL expressions from the labels automatically, please see the next FAQ entry regarding the "Generate JEXL with GPT" button. Read on if you'd like to write them manually, or if you want to understand how they work.</p>
             <p>The expressions are JEXL (JavaScript Expression Language) expressions, which is pretty similar to JavaScript. For example, you can use <code>white.isEmpty || (black.isAllTrue && black.hasGems)</code> to represent a statement like "the white box is empty or the black box is true AND contains gems".</p>
             <p>You can find more examples in the Help modal.</p>
             <p>If you'd like to read up more on how to write JEXL statements, you can do so <a href="https://github.com/TomFrost/jexl">here</a>, though the examples should be more than enough to get you started, and most of the basic JS syntax will work as you would expect it.</p>
@@ -528,6 +530,76 @@
     "boxWithGems": a reference to the box object that is assumed to have gems in this sub-case
     "boxesWithoutGems" or "emptyBoxes": an array of references to the box objects that are assumed to be empty in this sub-case
 }</code></pre>
+        </details>
+        <details>
+            <summary>I don't want to learn JEXL, can you translate the expressions automatically?</summary>
+            <p>You can enter the statements in normal English, and then press the button "Generate JEXL with GPT".</p>
+            <p>This will automatically construct a prompt for GPT and open ChatGPT it in a new tab, with your question posted automatically.</p>
+            <p>You can then copy over the resulting statements into the If TRUE fields for each statement.</p>
+            <p>This button is essentially a shortcut to ChatGPT, with a pre-written GPT prompt with your inputs.</p>
+            <p>Here is the full prompt, if you'd like to use it directly:</p>
+            <details>
+                <summary>Open full prompt</summary>
+                <pre>You are a parlor puzzle logic translator. The user will supply three boxes-blue, white, black-and a numbered list of natural-language statements for each. Your job is to translate logical, freeform statements into JEXL expressions.
+
+    Available JEXL context objects and properties:
+
+    blue, white, black each have:
+      .color                   // "blue" | "white" | "black"
+      .oneIsTrue, .oneIsFalse
+      .twoIsTrue, .twoIsFalse
+      .threeIsTrue, .threeIsFalse
+      .labels[]                // array of original statement labels
+      .bools[]                 // array of assumed truth values
+      .isAllTrue, .isTrue, .allIsTrue
+      .isAllFalse, .isFalse, .allIsFalse
+      .isMixed
+      .trueCount, .falseCount
+      .isEmpty, .empty, .hasNoGems
+      .hasGems, .notEmpty, .isNotEmpty
+    context object has:
+      .trueBoxCount, .allTrueBoxCount
+      .falseBoxCount, .allFalseBoxCount
+      .trueStatementCount, .falseStatementCount
+      .boxWithGems           // reference to the box object containing gems
+      .boxesWithoutGems, .emptyBoxes[]  // array of boxes assumed empty
+    You will also have access to the object "this", which will be assigned to a copy of the blue, white or black objects (depending on which box's label it is).
+
+    When solving, please ensure to consider the following:
+    1) Each box can have up to 3 statements. The user will provide every statement.
+    2) A box is considered "true" if it ONLY has true statements, and "false" if it ONLY has false statements. If it has a mix of both, it's mixed.
+
+
+    Boolean: `&&`, `||`, `!`
+    Comparison: `==`, `!=`, `>`, `<`, `>=`, `<=`
+    Avoid comparing by reference, as objects are copied.
+
+    Examples: 
+    "exactly two true in blue" -> `blue.trueCount == 2`
+    "the empty boxes has at least 1 false statement" -> `context.emptyBoxes[0].falseCount > 0 && context.emptyBoxes[1].falseCount > 0`
+    "gems are in the blue box" -> `blue.hasGems` or `context.boxWithGems.color == "blue"`
+    "this box is blue" -> this.color == "blue"
+
+    You must respond in a numbered list, similar to the input of the user.
+
+
+    User input:
+
+    Blue: 
+    1. This box has at least two true statements. 
+    2. The Black Box has at least two true statements. 
+    3. The gems are in this box 
+
+    White:
+    1. Every statement on the blue box is false 
+    2. Every statement on the black box is true 
+    3. The gems are in this box 
+
+    Black:
+    1. This is a true statement 
+    2. This is a true statement 
+    3. The gems are in this box</pre>
+            </details>
         </details>
         <details>
             <summary>How do I deal with statements that just don't make any sense?</summary>
@@ -881,6 +953,92 @@ function generateCases() {
         });
     });
 }
+
+function getStatementText(boxName, idx, trueOrFalse) {
+    const labelId = `${boxName}_s${idx + 1}_${trueOrFalse}_label`;
+    const codeId = `${boxName}_s${idx + 1}_${trueOrFalse}_code`;
+    const labelEl = document.getElementById(labelId);
+    const codeEl = document.getElementById(codeId);
+    const labelVal = labelEl ? labelEl.value.trim() : '';
+    const codeVal = codeEl ? codeEl.value.trim() : '';
+    if (labelVal) {
+        return labelVal;
+    }
+    if (codeVal) {
+        return codeVal;
+    }
+    return '';
+}
+
+const gptPromptBase = `You are a parlor puzzle logic translator. The user will supply three boxes-blue, white, black-and a numbered list of natural-language statements for each. Your job is to translate logical, freeform statements into JEXL expressions.
+
+Available JEXL context objects and properties:
+
+blue, white, black each have:
+  .color                   // "blue" | "white" | "black"
+  .oneIsTrue, .oneIsFalse
+  .twoIsTrue, .twoIsFalse
+  .threeIsTrue, .threeIsFalse
+  .labels[]                // array of original statement labels
+  .bools[]                 // array of assumed truth values
+  .isAllTrue, .isTrue, .allIsTrue
+  .isAllFalse, .isFalse, .allIsFalse
+  .isMixed
+  .trueCount, .falseCount
+  .isEmpty, .empty, .hasNoGems
+  .hasGems, .notEmpty, .isNotEmpty
+context object has:
+  .trueBoxCount, .allTrueBoxCount
+  .falseBoxCount, .allFalseBoxCount
+  .trueStatementCount, .falseStatementCount
+  .boxWithGems           // reference to the box object containing gems
+  .boxesWithoutGems, .emptyBoxes[]  // array of boxes assumed empty
+You will also have access to the object "this", which will be assigned to a copy of the blue, white or black objects (depending on which box's label it is).
+
+When solving, please ensure to consider the following:
+1) Each box can have up to 3 statements. The user will provide every statement.
+2) A box is considered "true" if it ONLY has true statements, and "false" if it ONLY has false statements. If it has a mix of both, it's mixed.
+
+
+Boolean: &&, ||, !
+Comparison: ==, !=, >, <, >=, <=
+Avoid comparing by reference, as objects are copied.
+
+Examples: 
+"exactly two true in blue" -> blue.trueCount == 2
+"the empty boxes has at least 1 false statement" -> context.emptyBoxes[0].falseCount > 0 && context.emptyBoxes[1].falseCount > 0
+"gems are in the blue box" -> blue.hasGems or context.boxWithGems.color == "blue"
+"this box is blue" -> this.color == "blue"
+
+You must respond in a numbered list, similar to the input of the user.
+
+
+User input:\n\n`;
+
+function openGpt() {
+    let prompt = gptPromptBase;
+
+    for (const boxName of boxNames) {
+        const count = getStatementsCount(boxName);
+        prompt += `${boxName}:\n`;
+
+        for (let i = 0; i < count; i++) {
+            let text = getStatementText(boxName, i, true);
+            if (!text) {
+                text = '(empty statement)';
+            }
+
+            prompt += `${i + 1}. ${text}\n`;
+        }
+
+        prompt += '\n';
+    }
+
+    const encodedPrompt = encodeURIComponent(prompt);
+    const url = `https://chat.openai.com/?q=${encodedPrompt}`;
+    window.open(url, '_blank');
+}
+
 
 function clearCalculations() {
     state.cases.forEach(({
