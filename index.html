@@ -917,91 +917,130 @@ function clearAll() {
     document.getElementById('outcomeText').textContent = '';
 }
 
-function serializeStateToUrl() {
-    const params = new URLSearchParams();
+function isValidState(params) {
+    if (typeof params !== 'object' || params === null) {
+        return false;
+    }
 
-    for (let boxName of boxNames) {
-        params.set(boxName.toLowerCase() + 'Count', getStatementsCount(boxName));
-    
-        const count = getStatementsCount(boxName);
-        for (let i = 0; i < count; i++) {
-            for (let state of ['true', 'false']) {
-                const labelId = `${boxName}_s${i + 1}_${state}_label`;
-                const codeId = `${boxName}_s${i + 1}_${state}_code`;
-                const labelEl = document.getElementById(labelId);
-                const codeEl = document.getElementById(codeId);
-                if (labelEl) {
-                    params.set(labelId, labelEl.value);
-                }
-                if (codeEl) {
-                    params.set(codeId, codeEl.value);
+    for (const boxName of boxNames) {
+        const box = params[boxName];
+        if (!box || typeof box.count !== 'number' || !Array.isArray(box.statements)) {
+            return false;
+        }
+
+        if (box.statements.length !== box.count) {
+            return false;
+        }
+
+        for (const statement of box.statements) {
+            for (const stateType of ['true', 'false']) {
+                const state = statement[stateType];
+                if (!state || typeof state.label !== 'string' || typeof state.code !== 'string') {
+                    return false;
                 }
             }
         }
     }
 
+    return true;
+}
+
+function serializeStateToUrl() {
+    const params = {};
+
+    for (let boxName of boxNames) {
+        const count = getStatementsCount(boxName);
+        params[boxName] = { count, statements: [] };
+
+        for (let i = 0; i < count; i++) {
+            const statement = {};
+            for (let stateType of ['true', 'false']) {
+                const labelId = `${boxName}_s${i + 1}_${stateType}_label`;
+                const codeId = `${boxName}_s${i + 1}_${stateType}_code`;
+                const labelEl = document.getElementById(labelId);
+                const codeEl = document.getElementById(codeId);
+                if (labelEl && codeEl) {
+                    statement[stateType] = {
+                        label: labelEl.value,
+                        code: codeEl.value,
+                    };
+                }
+            }
+            params[boxName].statements.push(statement);
+        }
+    }
+
+    const encoded = btoa(JSON.stringify(params));
     const url = new URL(window.location);
-    url.search = params.toString();
+    url.search = `data=${encoded}`;
     history.replaceState({}, '', url);
 }
 
 
 function loadSerializedStateFromUrl() {
-    const params = new URLSearchParams(window.location.search);
+    const urlParams = new URLSearchParams(window.location.search);
+    const encoded = urlParams.get('data');
+
+    if (!encoded) {
+        return;
+    }
+
+    let params;
+    try {
+        params = JSON.parse(atob(encoded));
+        if (!isValidState(params)) {
+            throw new Error("Invalid structure");
+        }
+    } catch (e) {
+        console.error("Failed to decode params from URL:", e);
+        return;
+    }
 
     for (let boxName of boxNames) {
-        const countParam = params.get(boxName.toLowerCase() + 'Count');
-        if (!countParam) {
+        const boxState = params[boxName];
+        if (!boxState) {
             continue;
         }
-            
+
         const group = document.querySelector(`.button-group[data-name="${boxName.toLowerCase()}Count"]`);
         if (!group) {
             continue;
         }
-
-        let anyButton = false;
+        
         for (let toggleButton of group.querySelectorAll('.toggle-button')) {
-            toggleButton.classList.toggle('active', toggleButton.dataset.value === countParam);
-            anyButton = anyButton || toggleButton.dataset.value === countParam;
-        };
-
-        if (!anyButton) {
-            // invalid url param, we set it to the default
-            group.querySelector('.toggle-button[data-value="2"]')?.classList.add('active');
+            toggleButton.classList.toggle('active', toggleButton.dataset.value === String(boxState.count));
         }
     }
 
     generateInputs();
 
     for (let boxName of boxNames) {
-        params.set(boxName.toLowerCase() + 'Count', getStatementsCount(boxName));
-    
-        const count = getStatementsCount(boxName);
-        for (let i = 0; i < count; i++) {
-            for (let state of ['true', 'false']) {
-                const labelId = `${boxName}_s${i + 1}_${state}_label`;
-                const codeId = `${boxName}_s${i + 1}_${state}_code`;
+        const boxState = params[boxName];
+        if (!boxState) {
+            continue;
+        }
+
+        for (let i = 0; i < boxState.count; i++) {
+            const statement = boxState.statements[i];
+            if (!statement) continue;
+
+            for (let stateType of ['true', 'false']) {
+                const data = statement[stateType];
+                const labelId = `${boxName}_s${i + 1}_${stateType}_label`;
+                const codeId = `${boxName}_s${i + 1}_${stateType}_code`;
+
                 const labelEl = document.getElementById(labelId);
                 const codeEl = document.getElementById(codeId);
+
                 if (labelEl) {
-                    labelEl.value = params.get(labelId) || '';
+                    labelEl.value = data?.label || '';
                 }
                 if (codeEl) {
-                    codeEl.value = params.get(codeId) || '';
+                    codeEl.value = data?.code || '';
                 }
             }
         }
     }
-
-    setTimeout(() => {
-        for (const [key, value] of params.entries()) {
-            const el = document.getElementById(key);
-            if (el) {
-                el.value = value;
-            }
-        }
-    }, 0);
 }
 
 function strictContext(obj, objName) {
