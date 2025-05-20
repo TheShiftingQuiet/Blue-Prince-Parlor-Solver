@@ -57,53 +57,24 @@ This is what you would fill out in the tool:
 
 ![image](https://github.com/user-attachments/assets/0da637f0-7fb9-4765-b8fc-7e2bc000e3e8)
   
-Here is the text from the screenshot (you can also get it pre-filled by following this example URL: 
-[\[Click here to open the solver with the pre-filled labels for this example\]](https://theshiftingquiet.github.io/Blue-Prince-Parlor-Solver/?blueCount=3&Blue_s1_true_label=always+true&Blue_s1_true_code=true&Blue_s1_false_label=impossible&Blue_s1_false_code=false&Blue_s2_true_label=The+Black+Box+has+at+least+two+true+statements.+%28always+true%29&Blue_s2_true_code=true&Blue_s2_false_label=impossible&Blue_s2_false_code=false&Blue_s3_true_label=The+gems+are+in+this+box&Blue_s3_true_code=blue.hasGems&Blue_s3_false_label=The+gems+are+in+white+or+black&Blue_s3_false_code=blue.isEmpty&whiteCount=3&White_s1_true_label=Every+statement+on+the+blue+box+is+false&White_s1_true_code=blue.isAllFalse&White_s1_false_label=Blue+has+at+least+one+true+statement&White_s1_false_code=%21blue.isAllFalse&White_s2_true_label=Every+statement+on+the+black+box+is+true&White_s2_true_code=black.isAllTrue&White_s2_false_label=Black+has+at+least+one+false+statement&White_s2_false_code=%21black.isAllTrue&White_s3_true_label=The+gems+are+in+this+box&White_s3_true_code=white.hasGems&White_s3_false_label=The+gems+are+in+blue+or+black&White_s3_false_code=white.isEmpty&blackCount=3&Black_s1_true_label=This+is+a+true+statement&Black_s1_true_code=true&Black_s1_false_label=paradox%2C+impossible&Black_s1_false_code=false&Black_s2_true_label=This+is+a+true+statement&Black_s2_true_code=true&Black_s2_false_label=paradox%2C+impossible&Black_s2_false_code=false&Black_s3_true_label=The+gems+are+in+this+box&Black_s3_true_code=black.hasGems&Black_s3_false_label=The+gems+are+in+blue+or+white&Black_s3_false_code=black.isEmpty)  
+Here is the text from the screenshot (you can also get it pre-filled by following this example URL:  
+[\[Click here to open the solver with the pre-filled labels for this example\]](https://theshiftingquiet.github.io/Blue-Prince-Parlor-Solver/?data=eyJCbHVlIjp7ImNvdW50IjozLCJzdGF0ZW1lbnRzIjpbeyJ0cnVlIjp7ImxhYmVsIjoiIiwiY29kZSI6ImJsdWUudHJ1ZUNvdW50ID49IDIifSwiZmFsc2UiOnsibGFiZWwiOiIiLCJjb2RlIjoiISggYmx1ZS50cnVlQ291bnQgPj0gMiApIn19LHsidHJ1ZSI6eyJsYWJlbCI6IiIsImNvZGUiOiJibGFjay50cnVlQ291bnQgPj0gMiJ9LCJmYWxzZSI6eyJsYWJlbCI6IiIsImNvZGUiOiIhKCBibGFjay50cnVlQ291bnQgPj0gMiApIn19LHsidHJ1ZSI6eyJsYWJlbCI6IiIsImNvZGUiOiJibHVlLmhhc0dlbXMifSwiZmFsc2UiOnsibGFiZWwiOiIiLCJjb2RlIjoiISggYmx1ZS5oYXNHZW1zICkifX1dfSwiV2hpdGUiOnsiY291bnQiOjMsInN0YXRlbWVudHMiOlt7InRydWUiOnsibGFiZWwiOiIiLCJjb2RlIjoiYmx1ZS5pc0FsbEZhbHNlIn0sImZhbHNlIjp7ImxhYmVsIjoiIiwiY29kZSI6IiEoIGJsdWUuaXNBbGxGYWxzZSApIn19LHsidHJ1ZSI6eyJsYWJlbCI6IiIsImNvZGUiOiJibGFjay5pc0FsbFRydWUifSwiZmFsc2UiOnsibGFiZWwiOiIiLCJjb2RlIjoiISggYmxhY2suaXNBbGxUcnVlICkifX0seyJ0cnVlIjp7ImxhYmVsIjoiIiwiY29kZSI6IndoaXRlLmhhc0dlbXMifSwiZmFsc2UiOnsibGFiZWwiOiIiLCJjb2RlIjoiISggd2hpdGUuaGFzR2VtcyApIn19XX0sIkJsYWNrIjp7ImNvdW50IjozLCJzdGF0ZW1lbnRzIjpbeyJ0cnVlIjp7ImxhYmVsIjoiIiwiY29kZSI6InRydWUifSwiZmFsc2UiOnsibGFiZWwiOiIiLCJjb2RlIjoiISggdHJ1ZSApIn19LHsidHJ1ZSI6eyJsYWJlbCI6IiIsImNvZGUiOiJ0cnVlIn0sImZhbHNlIjp7ImxhYmVsIjoiIiwiY29kZSI6IiEoIHRydWUgKSJ9fSx7InRydWUiOnsibGFiZWwiOiIiLCJjb2RlIjoiYmxhY2suaGFzR2VtcyJ9LCJmYWxzZSI6eyJsYWJlbCI6IiIsImNvZGUiOiIhKCBibGFjay5oYXNHZW1zICkifX1dfX0=)  
   
 Blue box:  
-  
-1. True label: always true  
-   True JS: `true`  
-   False label: impossible  
-   False JS: `false`  
-2. True label: The Black Box has at least two true statements. (always true)  
-   True JS: `true`  
-   False label: impossible  
-   False JS: `false`  
-3. True label: The gems are in this box  
-   True JS: `blue.hasGems`  
-   False label: The gems are in white or black  
-   False JS: `blue.isEmpty`  
-  
+1. `blue.trueCount >= 2`  
+2. `black.trueCount >= 2`  
+3. `blue.hasGems`  
+
 White box:  
-  
-1. True label: Every statement on the blue box is false  
-   True JS: `blue.isAllFalse`  
-   False label: Blue has at least one true statement  
-   False JS: `!blue.isAllFalse`  
-2. True label: Every statement on the black box is true  
-   True JS: `black.isAllTrue`  
-   False label: Black has at least one false statement  
-   False JS: `!black.isAllTrue`  
-3. True label: The gems are in this box  
-   True JS: `white.hasGems`  
-   False label: The gems are in blue or black  
-   False JS: `white.isEmpty`  
-  
+1. `blue.isAllFalse`  
+2. `black.isAllTrue`  
+3. `white.hasGems`  
+
 Black box:  
-  
-1. True label: This is a true statement  
-   True JS: `true`  
-   False label: paradox, impossible  
-   False JS: `false`  
-2. True label: This is a true statement  
-   True JS: `true`  
-   False label: paradox, impossible  
-   False JS: `false`  
-3. True label: The gems are in this box  
-   True JS: `black.hasGems`  
-   False label: The gems are in blue or white  
-   False JS: `black.isEmpty`  
+1. `true`  
+2. `true`  
+3. `black.hasGems`  
+
   
 The result looks like this:  
 
