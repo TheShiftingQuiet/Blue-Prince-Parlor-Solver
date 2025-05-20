@@ -657,7 +657,8 @@
                 <p>If you're doing the TRUE js condition for the statement "the white box is empty", then use the following JEXL condition:</p>
                 <code>white.isEmpty</code><br>
                 <p>If you're doing the FALSE js condition for the statement "every statement with the word "empty" is false", the negation of which would be "at least one statement with the word "empty" is true", and assuming the statements that contain the word "empty' are blue 1, white 1, white 2 and black 1, then use the following JEXL condition:</p>
-                <code>blue.oneIsTrue || white.oneIsTrue || white.twoIsTrue || black.oneIsTrue
+                <code>blue.oneIsTrue || white.oneIsTrue || white.twoIsTrue || black.oneIsTrue</code><br>
+                <p>You will also have access to the object "this", which will be assigned to a copy of the blue, white or black objects (depending on which box's label it is).</p>
             </div>
         </div>
     </div>
@@ -1161,6 +1162,7 @@ function calculate() {
                             blue: strictContext(boxPropsObjects[0], 'blue'),
                             white: strictContext(boxPropsObjects[1], 'white'),
                             black: strictContext(boxPropsObjects[2], 'black'),
+                            "this": strictContext(boxPropsObjects[boxIndex], 'this'),
                             context: strictContext(context, 'context')
                         });
 
