@@ -13,9 +13,9 @@ Eventually I figured, it would be pretty fun to create a tool that essentially l
 # Links  
   
 You can try it out live, here!  
-[https://theshiftingquiet.github.io/Blue-Prince-Parlor-Solver/](https://theshiftingquiet.github.io/Blue-Prince-Parlor-Solver/)
+[https://theshiftingquiet.github.io/Blue-Prince-Parlor-Solver/](https://theshiftingquiet.github.io/Blue-Prince-Parlor-Solver/)  
   
-You can click the "Help" button on the webpage for more instructions.  
+You can check out the FAQ entries on the webpage for more instructions.  
   
 # How it works  
 
