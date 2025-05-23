@@ -944,6 +944,44 @@ function getStatementsCount(boxName) {
     return parseInt(document.querySelector(`.button-group[data-name="${boxName}Count"] .toggle-button.active`).dataset.value);
 }
 
+function tempCompactMode(caseWidth = 800, statementWidth = 200) {
+    // I'll use this from time to time until I add polished compact mode for the public
+    const existingStyle = document.getElementById('reasoning-style');
+    if (existingStyle) {
+        existingStyle.remove();
+    }
+
+    const style = document.createElement('style');
+    style.id = 'reasoning-style';
+    style.textContent = `
+.reasoning ol {
+    display: flex;
+    gap: 25px;
+}
+
+.case {
+    width: ${caseWidth}px;
+}
+
+.effects {
+    width: ${statementWidth}px;
+}
+
+#cases {
+    display: flex;
+    flex-wrap: wrap;
+}
+`;
+    document.head.appendChild(style);
+}
+
+function tempCompactModeOff() {
+    const style = document.getElementById('reasoning-style');
+    if (style) {
+        style.remove();
+    }
+}
+
 
 function generateInputs() {
     const inputArea = document.getElementById('inputArea');
@@ -1129,14 +1167,7 @@ function generateCases() {
             const count = combo[boxIndex].length;
             const part = `<b><u>${capitalize(boxName)} (${combo[boxIndex].map(v => v ? '<span class="effect-span effect-true">TRUE</span>' : '<span class="effect-span effect-false">FALSE</span>').join(' / ')}):</u></b><br>` +
                 combo[boxIndex].map((assumedTrue, statementIndex) => {
-                    const idPrefix = `${boxName}_s${statementIndex + 1}_${assumedTrue ? 'true' : 'false'}`;
-                    const codeInputId = `${idPrefix}_code`;
-                    const labelInputId = `${idPrefix}_label`;
-                    const code = document.getElementById(codeInputId)?.value || '';
-                    const label = document.getElementById(labelInputId)?.value || '';
-
-                    let isDisplayingCode = label.trim().length === 0;
-                    let displaySafeHTML = isDisplayingCode ? `<code>\`${escapeHTML(code)}\`</code>` : escapeHTML(`${label}`);
+                    let { displaySafeHTML } = generateStatementSafeHTML(boxName, statementIndex, assumedTrue);
 
                     return `<span class="stmt" data-box-name="${boxName}" data-statement-index="${statementIndex}" data-assumed-true="${assumedTrue}">${statementIndex + 1}. ${displaySafeHTML}</span>`;
                 }).join('<br>');
@@ -1637,6 +1668,32 @@ function strictContext(obj, objName) {
     });
 }
 
+function generateStatementSafeHTML(boxName, statementIndex, assumedTrue) {
+    const idPrefix = `${boxName}_s${statementIndex + 1}_${assumedTrue ? 'true' : 'false'}`;
+    const codeInputId = `${idPrefix}_code`;
+    const labelInputId = `${idPrefix}_label`;
+    const code = document.getElementById(codeInputId)?.value || '';
+    let label = document.getElementById(labelInputId)?.value || '';
+    if (label.trim().length === 0 && !assumedTrue) {
+        // if this is a false - those can often be empty from OCR since falses are hidden
+        // so we try the true label too
+        const trueLabelInputId = `${boxName}_s${statementIndex + 1}_true_label`;
+        const trueLabel = document.getElementById(trueLabelInputId)?.value || '';
+        if (trueLabel.trim().length > 0) {
+            label = `(not true) ${trueLabel}`;
+        }
+    }
+
+    let isDisplayingCode = label.trim().length === 0;
+    let displaySafeHTML = isDisplayingCode ? `<code>\`${escapeHTML(code)}\`</code>` : escapeHTML(`"${label}"`);
+
+    return {
+        displaySafeHTML,
+        code,
+        label
+    };
+}
+
 
 function calculate() {
     clearCalculations();
@@ -1726,14 +1783,7 @@ function calculate() {
                 const statementTruthsArray = combo[boxIndex];
                 for (let statementIndex = 0; statementIndex < statementTruthsArray.length; statementIndex++) {
                     const assumedTrue = statementTruthsArray[statementIndex];
-                    const idPrefix = `${boxName}_s${statementIndex + 1}_${assumedTrue ? 'true' : 'false'}`;
-                    const codeInputId = `${idPrefix}_code`;
-                    const labelInputId = `${idPrefix}_label`;
-                    const code = document.getElementById(codeInputId)?.value || '';
-                    const label = document.getElementById(labelInputId)?.value || '';
-
-                    let isDisplayingCode = label.trim().length === 0;
-                    let displaySafeHTML = isDisplayingCode ? `<code>\`${escapeHTML(code)}\`</code>` : escapeHTML(`"${label}"`);
+                    let { displaySafeHTML, label, code } = generateStatementSafeHTML(boxName, statementIndex, assumedTrue);
 
                     if (!code || code.trim() === '') {
                         // it's empty, we assume no contradiction
