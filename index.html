@@ -716,112 +716,113 @@ Black:
 3. Statement 3 (if any)
 </pre>
         </details>
-        <details>
-            <summary>How do I deal with statements that just don't make any sense?</summary>
-            <p>A statement like "this box is of no help at all", for example, right?</p>
-            <p>That's somewhat of a subjective box, but most of those boxes are usually false, or paradoxical enough to be considered false.</p>
-            <p>For those, you can provide <code>false</code> as the condition for the TRUE case, and <code>true</code> as the condition for the FALSE case, which would mean that this statement cannot be true (but it logically works if we assume it's false).</p>
-        </details>
-        <details>
-            <summary>How does the tool work?</summary>
-            <p>Essentially, it goes through all 6-18+ possible combinations of 1-3 true/false statements.</p>
-            <p>Then, for each case, goes through all 3 possible gem placements.</p>
-            <p>It evaluates each statement with its assumed truthfulness.</p>
-            <p>If any of the statements evaluate to false - that's a contradiction.</p>
-            <p>If any of the 3 possible gem placements work out with no contradictions across all statements - that's a valid answer.</p>
-            <p>In the end, if there's only one valid answer - that's your definitive answer.</p>
-            <p>If there's multiple - there's some sort of ambiguity that you can resolve by looking at the page's reasoning for each of the cases.</p>
-            <p>If there are none - there must be some logical error in how some of the statements are constructed.</p>
-        </details>
-        <details>
-            <summary>I'm getting an ambiguity error</summary>
-            <p>The parlor puzzles are designed in a way that they can be solved with logic, without any guessing necessary.</p>
-            <p>This means, if you are getting an ambiguity - there is something missing: perhaps you made a typo in one of the statements, perhaps you missed a statement, maybe you missed a constraint that a statement implies, perhaps you misinterpreted the statement.</p>
-            <p>If you have any questions, or if you feel like the tool isn't working as expected, feel free to post an issue on Github.</p>
-        </details>
-        <details>
-            <summary>I'm getting a no possible answers error</summary>
-            <p>The parlor puzzles always have at least one possible answer, so if you're getting a 0 possible answers error - there is something wrong with the statements.</p>
-            <p>Double-check all your statements and make sure they are all logically consistent, and that you're not adding some constraint that isn't implied by the statements.</p>
-            <p>For example, think about the statement "a box next to this box has only true statements". That does not imply that there are no false boxes next to the box - just that there is SOME box next to it that has only true statements.</p>
-        </details>
-        <details>
-            <summary>I'm getting an alert with some JEXL error</summary>
-            <p>You must have made some syntax error in the JEXL expression, or perhaps you tried accessing a property that doesn't exist.</p>
-            <p>To prevent common typos, I've made it so that access to properties that don't exist will throw an error, rather than returning undefined.</p>
-            <p>That's because you wouldn't want <code>white.iSTrue</code> to return undefined (falsy), even though <code>white.isTrue</code> may have been true.</p>
-        </details>
-        <details>
-            <summary>What's the advanced way, how do I understand or write the JEXL logical expressions myself?</summary>
-            <p>The expressions are JEXL (JavaScript Expression Language) expressions, which is pretty similar to JavaScript. For example, you can use <code>white.isEmpty || (black.isAllTrue && black.hasGems)</code> to represent a statement like "the white box is empty or the black box is true AND contains gems".</p>
-            <p>You can find more examples in the Help modal.</p>
-            <p>If you'd like to read up more on how to write JEXL statements, you can do so <a href="https://github.com/TomFrost/jexl">here</a>, though the examples should be more than enough to get you started, and most of the basic JS syntax will work as you would expect it.</p>
-            <p>Your JEXL condition will have access to the following objects (and each will have a different value when considering each possibility) - blue, white, black, each object with:</p>
-            <pre><code>{
-    "color": "blue" or "white" or "black",
-    "oneIsTrue": true if blue 1 statement is assumed true in this case, false otherwise,
-    "oneIsFalse": true if blue 1 statement is assumed false in this case, false otherwise,
-    "twoIsTrue": true if blue 2 statement is assumed true in this case, false otherwise,
-    "twoIsFalse": true if blue 2 statement is assumed false in this case, false otherwise,
-    "threeIsTrue": true if blue 3 statement is assumed true in this case, false otherwise,
-    "threeIsFalse": true if blue 3 statement is assumed false in this case, false otherwise,
-    "statements": array of strings, each representing the text of the statement in this box (statements[0] = blue 1 statement, statements[1] = blue 2 statement, etc.)
-    "bools": array of booleans, each representing the truthiness of the statement in this box (bools[0] = blue.oneIsTrue, bools[1] = blue.twoIsTrue, etc.)
-    "isAllTrue" or "isTrue" or "allIsTrue": true if all of the statements in this box are assumed true in this case, false otherwise
-    "isAllFalse" or "isFalse" or "allIsFalse": true if all of the statements in this box are assumed false in this case, false otherwise
-    "isMixed": true if this box has at least one true and at least one false statement (so it's neither an all-true nor all-false box)
-    "trueCount": number of statements that are assumed true in this case
-    "falseCount": number of statements that are assumed false in this case
-    "isEmpty" or "empty" or "hasNoGems": true if this sub-case assumes it's empty
-    "hasGems" or "notEmpty" or "isNotEmpty": true if this sub-case assumes it has gems
+    </details>
+    <details>
+        <summary>How do I deal with statements that just don't make any sense?</summary>
+        <p>A statement like "this box is of no help at all", for example, right?</p>
+        <p>That's somewhat of a subjective box, but most of those boxes are usually false, or paradoxical enough to be considered false.</p>
+        <p>For those, you can provide <code>false</code> as the condition for the TRUE case, and <code>true</code> as the condition for the FALSE case, which would mean that this statement cannot be true (but it logically works if we assume it's false).</p>
+    </details>
+    <details>
+        <summary>How does the tool work?</summary>
+        <p>Essentially, it goes through all 6-18+ possible combinations of 1-3 true/false statements.</p>
+        <p>Then, for each case, goes through all 3 possible gem placements.</p>
+        <p>It evaluates each statement with its assumed truthfulness.</p>
+        <p>If any of the statements evaluate to false - that's a contradiction.</p>
+        <p>If any of the 3 possible gem placements work out with no contradictions across all statements - that's a valid answer.</p>
+        <p>In the end, if there's only one valid answer - that's your definitive answer.</p>
+        <p>If there's multiple - there's some sort of ambiguity that you can resolve by looking at the page's reasoning for each of the cases.</p>
+        <p>If there are none - there must be some logical error in how some of the statements are constructed.</p>
+    </details>
+    <details>
+        <summary>I'm getting an ambiguity error</summary>
+        <p>The parlor puzzles are designed in a way that they can be solved with logic, without any guessing necessary.</p>
+        <p>This means, if you are getting an ambiguity - there is something missing: perhaps you made a typo in one of the statements, perhaps you missed a statement, maybe you missed a constraint that a statement implies, perhaps you misinterpreted the statement.</p>
+        <p>If you have any questions, or if you feel like the tool isn't working as expected, feel free to post an issue on Github.</p>
+    </details>
+    <details>
+        <summary>I'm getting a no possible answers error</summary>
+        <p>The parlor puzzles always have at least one possible answer, so if you're getting a 0 possible answers error - there is something wrong with the statements.</p>
+        <p>Double-check all your statements and make sure they are all logically consistent, and that you're not adding some constraint that isn't implied by the statements.</p>
+        <p>For example, think about the statement "a box next to this box has only true statements". That does not imply that there are no false boxes next to the box - just that there is SOME box next to it that has only true statements.</p>
+    </details>
+    <details>
+        <summary>I'm getting an alert with some JEXL error</summary>
+        <p>You must have made some syntax error in the JEXL expression, or perhaps you tried accessing a property that doesn't exist.</p>
+        <p>To prevent common typos, I've made it so that access to properties that don't exist will throw an error, rather than returning undefined.</p>
+        <p>That's because you wouldn't want <code>white.iSTrue</code> to return undefined (falsy), even though <code>white.isTrue</code> may have been true.</p>
+    </details>
+    <details>
+        <summary>What's the advanced way, how do I understand or write the JEXL logical expressions myself?</summary>
+        <p>The expressions are JEXL (JavaScript Expression Language) expressions, which is pretty similar to JavaScript. For example, you can use <code>white.isEmpty || (black.isAllTrue && black.hasGems)</code> to represent a statement like "the white box is empty or the black box is true AND contains gems".</p>
+        <p>You can find more examples in the Help modal.</p>
+        <p>If you'd like to read up more on how to write JEXL statements, you can do so <a href="https://github.com/TomFrost/jexl">here</a>, though the examples should be more than enough to get you started, and most of the basic JS syntax will work as you would expect it.</p>
+        <p>Your JEXL condition will have access to the following objects (and each will have a different value when considering each possibility) - blue, white, black, each object with:</p>
+        <pre><code>{
+"color": "blue" or "white" or "black",
+"oneIsTrue": true if blue 1 statement is assumed true in this case, false otherwise,
+"oneIsFalse": true if blue 1 statement is assumed false in this case, false otherwise,
+"twoIsTrue": true if blue 2 statement is assumed true in this case, false otherwise,
+"twoIsFalse": true if blue 2 statement is assumed false in this case, false otherwise,
+"threeIsTrue": true if blue 3 statement is assumed true in this case, false otherwise,
+"threeIsFalse": true if blue 3 statement is assumed false in this case, false otherwise,
+"statements": array of strings, each representing the text of the statement in this box (statements[0] = blue 1 statement, statements[1] = blue 2 statement, etc.)
+"bools": array of booleans, each representing the truthiness of the statement in this box (bools[0] = blue.oneIsTrue, bools[1] = blue.twoIsTrue, etc.)
+"isAllTrue" or "isTrue" or "allIsTrue": true if all of the statements in this box are assumed true in this case, false otherwise
+"isAllFalse" or "isFalse" or "allIsFalse": true if all of the statements in this box are assumed false in this case, false otherwise
+"isMixed": true if this box has at least one true and at least one false statement (so it's neither an all-true nor all-false box)
+"trueCount": number of statements that are assumed true in this case
+"falseCount": number of statements that are assumed false in this case
+"isEmpty" or "empty" or "hasNoGems": true if this sub-case assumes it's empty
+"hasGems" or "notEmpty" or "isNotEmpty": true if this sub-case assumes it has gems
 }</code></pre>
-                        <p>You will also have access to the object "context" with the following properties:</p>
-                        <pre><code>{
-    "trueBoxCount" or "allTrueBoxCount": number of boxes that are assumed to have only true statements in this case
-    "falseBoxCount" or "allFalseBoxCount": number of boxes that are assumed to have only false statements in this case
-    "trueStatementCount": number of statements that are assumed true in this case across all boxes
-    "falseStatementCount": number of statements that are assumed false in this case across all boxes
-    "boxWithGems": a reference to the box object that is assumed to have gems in this sub-case
-    "boxesWithoutGems" or "emptyBoxes": an array of references to the box objects that are assumed to be empty in this sub-case
+                    <p>You will also have access to the object "context" with the following properties:</p>
+                    <pre><code>{
+"trueBoxCount" or "allTrueBoxCount": number of boxes that are assumed to have only true statements in this case
+"falseBoxCount" or "allFalseBoxCount": number of boxes that are assumed to have only false statements in this case
+"trueStatementCount": number of statements that are assumed true in this case across all boxes
+"falseStatementCount": number of statements that are assumed false in this case across all boxes
+"boxWithGems": a reference to the box object that is assumed to have gems in this sub-case
+"boxesWithoutGems" or "emptyBoxes": an array of references to the box objects that are assumed to be empty in this sub-case
 }</code></pre>
-        </details>
-        <details>
-            <summary>JEXL doesn't support some advanced functions I'm trying to use</summary>
-            <p>JEXL is more of a subset of JavaScript, so it doesn't support all of the functions you might be used to.</p>
-            <p>Though, you can always add your own functions to JEXL, if you are familiar enough with JavaScript.</p>
-            <p>For example, you could add a function <code>countAllWords</code> by opening the devtools console and typing like this:</p>
-            <pre><code>
-                Jexl.addFunction('countAllWords', box => {
-                    return box.statements.reduce((acc, statement) => acc + (statement ? statement.split(' ').length : 0), 0);
-                });
-            </code></pre>
-            <p>You could then use it in your JEXL expressions like this:</p>
-            <pre><code>
-                countAllWords(blue) > 1
-            </code></pre>
-        </details>
-        <details>
-            <summary>What are the optional labels for?</summary>
-            <p>The labels (statements) are just for your own reference. They don't affect the logic of the statements in any way.</p>
-            <p>Basically, if you plan to look through each of the possible cases to troubleshoot - you can write the labels there to help you remember what each statement means.</p>
-            <p>You can also access these labels through the JEXL statements in case you got a statement like "The box with more than 8 words" and you don't want to count by hand.</p>
-        </details>
-        <details>
-            <summary>The statement is too complex to represent it as a JEXL statement</summary>
-            <p>Usually, even when it feels like it's hard to translate it into a logical statement - it is still possible, without any loss of data.</p>
-            <p>For example, if it says "a box next to this box has only true statements" - you don't need to try and figure out how to represent "next to" in a logical statement.</p>
-            <p>Instead, you can simply look at which boxes are next to this box, then, let's say it's the blue and black boxes - write: <code>blue.isAllTrue || black.isAllTrue</code>.</p>
-        </details>
-        <details>
-            <summary>How do I share my inputs with someone, do I have to copy-paste each statement?</summary>
-            <p>You can share your inputs with someone by copying the URL of the page after you have filled out the inputs and pressed Calculate (or after you've scanned a screenshot, or after you've imported JSON).</p>
-            <p>When you do any of those things, the page generates a unique URL that contains all of your inputs and the calculated results and appends it to the URL.</p>
-            <p>This is also edited into your navigation history, so if you refresh or go back - your inputs will be preserved.</p>
-        </details>
-        <details>
-            <summary>I would like to contribute to the project, report a bug, viuew the source code, or suggest a feature</summary>
-            <p>You're more than welcome to open an issue or a pull request <a href="https://github.com/TheShiftingQuiet/Blue-Prince-Parlor-Solver">in the Github repository!</a></p>
-        </details>
+    </details>
+    <details>
+        <summary>JEXL doesn't support some advanced functions I'm trying to use</summary>
+        <p>JEXL is more of a subset of JavaScript, so it doesn't support all of the functions you might be used to.</p>
+        <p>Though, you can always add your own functions to JEXL, if you are familiar enough with JavaScript.</p>
+        <p>For example, you could add a function <code>countAllWords</code> by opening the devtools console and typing like this:</p>
+        <pre><code>
+            Jexl.addFunction('countAllWords', box => {
+                return box.statements.reduce((acc, statement) => acc + (statement ? statement.split(' ').length : 0), 0);
+            });
+        </code></pre>
+        <p>You could then use it in your JEXL expressions like this:</p>
+        <pre><code>
+            countAllWords(blue) > 1
+        </code></pre>
+    </details>
+    <details>
+        <summary>What are the optional labels for?</summary>
+        <p>The labels (statements) are just for your own reference. They don't affect the logic of the statements in any way.</p>
+        <p>Basically, if you plan to look through each of the possible cases to troubleshoot - you can write the labels there to help you remember what each statement means.</p>
+        <p>You can also access these labels through the JEXL statements in case you got a statement like "The box with more than 8 words" and you don't want to count by hand.</p>
+    </details>
+    <details>
+        <summary>The statement is too complex to represent it as a JEXL statement</summary>
+        <p>Usually, even when it feels like it's hard to translate it into a logical statement - it is still possible, without any loss of data.</p>
+        <p>For example, if it says "a box next to this box has only true statements" - you don't need to try and figure out how to represent "next to" in a logical statement.</p>
+        <p>Instead, you can simply look at which boxes are next to this box, then, let's say it's the blue and black boxes - write: <code>blue.isAllTrue || black.isAllTrue</code>.</p>
+    </details>
+    <details>
+        <summary>How do I share my inputs with someone, do I have to copy-paste each statement?</summary>
+        <p>You can share your inputs with someone by copying the URL of the page after you have filled out the inputs and pressed Calculate (or after you've scanned a screenshot, or after you've imported JSON).</p>
+        <p>When you do any of those things, the page generates a unique URL that contains all of your inputs and the calculated results and appends it to the URL.</p>
+        <p>This is also edited into your navigation history, so if you refresh or go back - your inputs will be preserved.</p>
+    </details>
+    <details>
+        <summary>I would like to contribute to the project, report a bug, viuew the source code, or suggest a feature</summary>
+        <p>You're more than welcome to open an issue or a pull request <a href="https://github.com/TheShiftingQuiet/Blue-Prince-Parlor-Solver">in the Github repository!</a></p>
+    </details>
     </div>
 
     <footer id="footer">
