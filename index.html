@@ -1668,19 +1668,22 @@ function strictContext(obj, objName) {
     });
 }
 
-function generateStatementSafeHTML(boxName, statementIndex, assumedTrue) {
-    const idPrefix = `${boxName}_s${statementIndex + 1}_${assumedTrue ? 'true' : 'false'}`;
+function generateStatementSafeHTML(boxName, statementIndex, getTrueLabel) {
+    const idPrefix = `${boxName}_s${statementIndex + 1}_${getTrueLabel ? 'true' : 'false'}`;
     const codeInputId = `${idPrefix}_code`;
     const labelInputId = `${idPrefix}_label`;
     const code = document.getElementById(codeInputId)?.value || '';
     let label = document.getElementById(labelInputId)?.value || '';
-    if (label.trim().length === 0 && !assumedTrue) {
+    let returnedTrueLabelForFalse = false;
+
+    if (label.trim().length === 0 && !getTrueLabel) {
         // if this is a false - those can often be empty from OCR since falses are hidden
         // so we try the true label too
         const trueLabelInputId = `${boxName}_s${statementIndex + 1}_true_label`;
         const trueLabel = document.getElementById(trueLabelInputId)?.value || '';
         if (trueLabel.trim().length > 0) {
             label = `(not true) ${trueLabel}`;
+            returnedTrueLabelForFalse = true;
         }
     }
 
@@ -1690,7 +1693,8 @@ function generateStatementSafeHTML(boxName, statementIndex, assumedTrue) {
     return {
         displaySafeHTML,
         code,
-        label
+        label,
+        returnedTrueLabelForFalse
     };
 }
 
@@ -1698,22 +1702,20 @@ function generateStatementSafeHTML(boxName, statementIndex, assumedTrue) {
 function calculate() {
     clearCalculations();
     generateCases();
-    
-    console.log("Calculating contradictions across all cases...");
 
     let allValidBoxIndexes = new Set();
 
     let nextCaseIndex = 0;
     for (let {combo, element} of state.cases) {
         let caseIndex = nextCaseIndex++;
-        console.log(`\n\n\nEvaluating Case ${caseIndex + 1}\nBlue: ${combo[0].map(x => x ? 'TRUE' : 'FALSE').join(' / ')}\nWhite: ${combo[1].map(x => x ? 'TRUE' : 'FALSE').join(' / ')}\nBlack: ${combo[2].map(x => x ? 'TRUE' : 'FALSE').join(' / ')}`);
 
-        let contradictionSafeHTMLs = [];
+        // tuple of box index of the box with the gems and the HTML explanation of the contradiction of this subcase
+        let contradictionSafeHTMLTuples = [];
         let failedStatementsSet = new Set();
         let foundValidSubcaseInds = [];
         // we go through all sub-cases
         for (let gemsInBoxInd = 0; gemsInBoxInd < boxNames.length; gemsInBoxInd++) {
-            console.log(`\nCase ${caseIndex + 1}, subcase ${gemsInBoxInd + 1}`);
+            let gemsInBoxName = boxNames[gemsInBoxInd];
 
             const boxPropsObjects = [];
             for (let i = 0; i < boxNames.length; i++) {
@@ -1774,8 +1776,6 @@ function calculate() {
             context.allFalseBoxCount = context.falseBoxCount;
             context.emptyBoxes = context.boxesWithoutGems;
 
-            console.log(`Assuming ${capitalize(boxNames[gemsInBoxInd])} has gems:`, boxPropsObjects);
-
             // now we need to evaluate each of the statements of each box
             let foundContradiction = false;
             for (let boxIndex = 0; boxIndex < boxNames.length; boxIndex++) {
@@ -1783,7 +1783,7 @@ function calculate() {
                 const statementTruthsArray = combo[boxIndex];
                 for (let statementIndex = 0; statementIndex < statementTruthsArray.length; statementIndex++) {
                     const assumedTrue = statementTruthsArray[statementIndex];
-                    let { displaySafeHTML, label, code } = generateStatementSafeHTML(boxName, statementIndex, assumedTrue);
+                    let { displaySafeHTML, label, code, returnedTrueLabelForFalse } = generateStatementSafeHTML(boxName, statementIndex, assumedTrue);
 
                     if (!code || code.trim() === '') {
                         // it's empty, we assume no contradiction
@@ -1799,12 +1799,25 @@ function calculate() {
                             context: strictContext(context, 'context')
                         });
 
-                        console.log(`${capitalize(boxName)} ${statementIndex + 1} [${assumedTrue ? 'TRUE' : 'FALSE'}]: ${code} => ${!!result}`);
-
                         if (!result) {
                             foundContradiction = true;
                             failedStatementsSet.add(`${boxName}:${statementIndex}`);
-                            contradictionSafeHTMLs.push(`If gems in ${capitalize(boxName)}:\n${displaySafeHTML}\nThat assumption derived from ${boxName} box ${statementIndex + 1} is a CONTRADICTION`);
+
+                            let trueLabelHTML = generateStatementSafeHTML(boxName, statementIndex, true).displaySafeHTML;
+                            let idEstThatIsHTML = '';
+                            let expectedResultStr = assumedTrue ? 'TRUE' : 'FALSE';
+                            let actualResultStr = assumedTrue ? 'FALSE' : 'TRUE';
+
+                            if (!assumedTrue) {
+                                let falseStatementRes = generateStatementSafeHTML(boxName, statementIndex, false);
+                                if (!falseStatementRes.returnedTrueLabelForFalse) {
+                                    // we assumed this to be false, and there is an actual false label for it
+                                    // we can set the "i.e." part, then
+                                    idEstThatIsHTML = ` (i.e. ${falseStatementRes.displaySafeHTML})`;
+                                }
+                            }
+
+                            contradictionSafeHTMLTuples.push([gemsInBoxInd, `We assumed the ${boxName} ${statementIndex + 1} statement ${trueLabelHTML} to be ${expectedResultStr} in this case${idEstThatIsHTML}, but it evaluates to ${actualResultStr}.`]);
                             break;
                         }
                     } catch (err) {
@@ -1824,9 +1837,6 @@ function calculate() {
 
             if (!foundContradiction) {
                 foundValidSubcaseInds.push(gemsInBoxInd);
-                console.log(`No contradictions in this sub-case, case ${caseIndex + 1} is valid if we assume ${capitalize(boxNames[gemsInBoxInd])} has gems!`);
-            } else {
-                console.log(`That's a contradiction. This sub-case is no good.`);
             }
         }
 
@@ -1837,7 +1847,6 @@ function calculate() {
         if (foundValidSubcaseInds.length === 0) {
             reasoningHeading.textContent = `Invalid case. Reasoning:`;
 
-            console.log(`Case ${caseIndex + 1} is INVALID. All sub-cases (possible gem placements) lead to contradictions.`);
             element.classList.add('invalid-case');
             element.querySelectorAll('.stmt').forEach(span => {
                 const boxName = span.dataset.boxName;
@@ -1849,12 +1858,37 @@ function calculate() {
                     span.classList.remove('highlight-false');
                 }
             });
-                
+
+            // now, if there are any contradiction explanations that are the same for different gem box cases,
+            //   we don't repeat them, instead we group and say "If gems in blue/white", then (xyz)
+            // we still show them in order of blue, white, black (even if grouped)
+            let contradictionHTML_gemColors_map = new Map();
+            for (const [gemsBoxIndex, explanation] of contradictionSafeHTMLTuples) {
+                if (!contradictionHTML_gemColors_map.has(explanation)) {
+                    contradictionHTML_gemColors_map.set(explanation, new Set());
+                }
+                contradictionHTML_gemColors_map.get(explanation).add(gemsBoxIndex);
+            }
+
+            // list of {gemBoxes: [...], contradictionHTML }
+            const grouped = [];
+            for (const [contradictionHTML, gemBoxIndexSet] of contradictionHTML_gemColors_map.entries()) {
+                const sortedGemBoxIndexes = [...gemBoxIndexSet].sort(
+                    (a, b) => a - b
+                );
+                grouped.push({ gemBoxIndexes: sortedGemBoxIndexes, contradictionHTML: contradictionHTML });
+            }
+            // we then sort the group itself, sorting by their first gem box index (since the indexes are sorted too)
+            grouped.sort((a, b) => {
+                return a.gemBoxIndexes[0] - b.gemBoxIndexes[0];
+            });
+            
             const ol = document.createElement('ol');
-            for (let i = 0; i < contradictionSafeHTMLs.length; i++) {
-                const contradictionHTML = contradictionSafeHTMLs[i];
+            for (let { gemBoxIndexes, contradictionHTML } of grouped) {
+                let gemBoxNames = gemBoxIndexes.map(index => boxNames[index]);
+                let finalHTML = `If gems in ${gemBoxNames.join('/')}:\n${contradictionHTML}`;
                 const li = document.createElement('li');
-                li.innerHTML = contradictionHTML;
+                li.innerHTML = finalHTML;
                 ol.appendChild(li);
             }
             reasoningDiv.appendChild(ol);
@@ -1873,7 +1907,6 @@ function calculate() {
                 validSubcaseString = `Case ${caseIndex + 1} is ambiguous: it's valid if the gems are in either of the following boxes: ${foundValidSubcaseInds.map(ind => uppercase(boxNames[ind])).join(', ')}.`;
             }
 
-            console.log(validSubcaseString);
             const span = document.createElement('span');
             span.textContent = validSubcaseString;
             reasoningDiv.appendChild(span);
