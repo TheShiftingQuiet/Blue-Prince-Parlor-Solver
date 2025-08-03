@@ -1040,6 +1040,18 @@ function generateInputs() {
             });
             pasteBox.addEventListener('paste', handlePasteBoxPaste);
             boxDiv.appendChild(pasteBox);
+            
+            let fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'image/*';
+            fileInput.style.display = 'none';
+            fileInput.addEventListener('change', event => handleImageUpload(event, boxName));
+            boxDiv.appendChild(fileInput);
+            
+            let uploadImageBtn = document.createElement('button');
+            uploadImageBtn.textContent = 'Or click here to upload image';
+            uploadImageBtn.addEventListener('click', () => fileInput.click());
+            boxDiv.appendChild(uploadImageBtn);
         }
 
         for (let i = 0; i < maxPossibleStatements; i++) {
@@ -1944,6 +1956,28 @@ function closeCropModal() {
     document.getElementById('cropModal').style.display = 'none';
 }
 
+function loadImageIntoCropper(blob, boxName, sourceText = 'Image loaded') {
+    if (!state.cropper) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Cropper not loaded',
+            text: 'Please wait for Cropper to load and try again.'
+        });
+        return;
+    }
+
+    const url = URL.createObjectURL(blob);
+    state.cropper.getCropperImage().src = url;
+    state.cropper.getCropperSelection().$clear();
+    state.currentCropperBoxName = boxName;
+    document.getElementById('cropModal').style.display = 'block';
+
+    const pasteBox = document.querySelector(`.paste-box[data-box-name="${boxName}"]`);
+    if (pasteBox) {
+        pasteBox.textContent = `${sourceText}, yet to be cropped. Click and use Ctrl + V to override`;
+    }
+}
+
 function handlePasteBoxPaste(event) {
     event.preventDefault();    
     const items = event.clipboardData.items;
@@ -1961,23 +1995,21 @@ function handlePasteBoxPaste(event) {
     if (!targetItem) {
         return;
     }
-    if (!state.cropper) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Cropper not loaded',
-            text: 'Please wait for Cropper to load and try again.'
-        });
+    
+    const blob = targetItem.getAsFile();
+    loadImageIntoCropper(blob, event.target.dataset.boxName, "Screenshot captured");
+}
+
+function handleImageUpload(event, boxName) {
+    const file = event.target.files[0];
+    if (!file || !file.type.startsWith('image/')) {
         return;
     }
 
-    const blob = targetItem.getAsFile();
-    const url = URL.createObjectURL(blob);
-    state.cropper.getCropperImage().src = url;
-    state.cropper.getCropperSelection().$clear();
-    state.currentCropperBoxName = event.target.dataset.boxName;
-    document.getElementById('cropModal').style.display = 'block';
+    loadImageIntoCropper(file, boxName, 'Image uploaded');
 
-    event.target.textContent = 'Screenshot captured, yet to be cropped. Click and use Ctrl + V to override';
+    // we replace the input after, in case the user wants to reupload the same file
+    event.target.value = '';
 }
 
 function parseOcrResult(text) {
